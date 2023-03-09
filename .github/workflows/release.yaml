@@ -60,7 +60,7 @@ jobs:
         sudo prlimit --pid $$ --nproc=65536:65536
         sudo prlimit --pid $$ --nofile=500000:500000
         sudo chmod +x packer/build.sh
-        sudo cd packer && ./build.sh        
+        cd packer && ./build.sh
         date +"%nFinished Build Box at %r on %x%n"
 
     - name: Archive Log Files
