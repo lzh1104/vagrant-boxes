@@ -1,0 +1,74 @@
+name: Robox Validate
+
+jobs:
+  Build:
+    runs-on: ubuntu-20.04
+    env:
+        LANG: en_US.UTF-8
+        LANGUAGE: en_US:en
+        LC_ALL: en_US.UTF-8
+    steps:
+    - uses: actions/checkout@master
+    - name: Increase Limits
+      run: |
+        sudo sysctl -q vm.overcommit_ratio=100
+        sudo sysctl -q net.unix.max_dgram_qlen=64
+        sudo prlimit --pid $$ --nproc=65536:65536
+        sudo prlimit --pid $$ --nofile=500000:500000
+        printf "DefaultLimitNPROC=65536:65536\n" | sudo tee -a /etc/systemd/user.conf > /dev/null || exit 1
+        printf "DefaultLimitNPROC=65536:65536\n" | sudo tee -a /etc/systemd/system.conf > /dev/null || exit 1
+        printf "DefaultLimitNOFILE=500000:500000\n" | sudo tee -a /etc/systemd/user.conf > /dev/null || exit 1
+        printf "DefaultLimitNOFILE=500000:500000\n" | sudo tee -a /etc/systemd/system.conf > /dev/null || exit 1
+        sudo systemctl daemon-reload
+        systemctl --user daemon-reload
+    - name: Increase Swap
+      run: |
+        sudo dd if=/dev/zero of=/swap bs=1M count=4096 status=none
+        sudo chmod 600 /swap
+        sudo mkswap /swap
+        sudo swapon /swap
+    - name: Install Dependencies
+      env: 
+        DEBIAN_FRONTEND: noninteractive
+        DEBCONF_NONINTERACTIVE_SEEN: true
+      run: |
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+        sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+        sudo apt-get update
+        sudo apt-get --assume-yes install packer
+    - name: Validate Generic Box Configurations
+      env:
+        GOGC: 50
+        PACKER_LOG: 1
+        GOMAXPROCS: 1
+        VERSION: 1.0.0
+      run: |
+        date +"%nStarting generic box validation at %r on %x%n"
+        sudo prlimit --pid $$ --nproc=65536:65536
+        sudo prlimit --pid $$ --nofile=500000:500000
+        export PACKER_LOG_PATH=generic-docker.txt ; packer validate packer/CentOS-6.10.json &>> packer-validate.txt && printf "File  + CentOS-6.10.json\n" || { printf "File  - CentOS-6.10.json\n" ; exit 1 ; }
+        date +"%nFinished generic box validation at %r on %x%n"
+
+    - name: Build Box
+      env:
+        GOGC: 50
+        PACKER_LOG: 1
+        GOMAXPROCS: 1
+        VERSION: 1.0.0
+      run: |
+        date +"%nStarting lineage box validation at %r on %x%n"
+        sudo prlimit --pid $$ --nproc=65536:65536
+        sudo prlimit --pid $$ --nofile=500000:500000
+        sudo chmox +x packer/build.sh
+        sudo ./packer/build.sh        
+        date +"%nFinished Build Box at %r on %x%n"
+
+    - name: Archive Log Files
+      uses: actions/upload-artifact@v3
+      if: ${{ always() }}
+      with:
+        name: validate-logs
+        retention-days: 14
+        path: |
+          packer-validate.txt
+          builds/CentOS-*.box

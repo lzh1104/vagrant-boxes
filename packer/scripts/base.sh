@@ -9,7 +9,7 @@ echo 'options single-request-reopen' >> /etc/resolv.conf
 cat > /etc/yum.repos.d/epel.repo << EOM
 [epel]
 name=epel
-baseurl=http://download.fedoraproject.org/pub/epel/6/\$basearch
+baseurl=https://archives.fedoraproject.org/pub/archive/epel/6/\$basearch
 enabled=1
 gpgcheck=0
 EOM
