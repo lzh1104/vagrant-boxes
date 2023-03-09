@@ -13,7 +13,7 @@
       "iso_checksum": "sha256:cfa7d1808ab1ef4821276b18e05f4a4a7d15560a6a2d8e31caf2fa07fd4cd252",
 	  "guest_additions_url": "https://mirrors.cloud.tencent.com/virtualbox/4.3.40/VBoxGuestAdditions_4.3.40.iso",
       "guest_additions_sha256": "50714af11f98e7ae137ada9b28f9ad68ae5c191223aa52f2a0c44b944a79f46e",
-      "guest_additions_path": "VBoxGuestAdditions.iso",
+      "guest_additions_path": "VBoxGuestAdditions_4.3.40.iso",
       "guest_additions_mode": "upload",
       "virtualbox_version_file": "VBoxVersion.txt",
       "disk_size": 204800,

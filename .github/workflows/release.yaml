@@ -29,15 +29,13 @@ jobs:
         sudo chmod 600 /swap
         sudo mkswap /swap
         sudo swapon /swap
-    - name: Install Dependencies
-      env: 
-        DEBIAN_FRONTEND: noninteractive
-        DEBCONF_NONINTERACTIVE_SEEN: true
-      run: |
-        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-        sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-        sudo apt-get update
-        sudo apt-get --assume-yes install packer
+
+    - name: Setup `packer`
+      uses: hashicorp/setup-packer@main
+      id: setup
+      with:
+        version: "latest"
+          
     - name: Validate Generic Box Configurations
       env:
         GOGC: 50
@@ -48,7 +46,7 @@ jobs:
         date +"%nStarting generic box validation at %r on %x%n"
         sudo prlimit --pid $$ --nproc=65536:65536
         sudo prlimit --pid $$ --nofile=500000:500000
-        export PACKER_LOG_PATH=generic-docker.txt ; packer validate packer/CentOS-6.10.json &>> packer-validate.txt && printf "File  + CentOS-6.10.json\n" || { printf "File  - CentOS-6.10.json\n" ; exit 1 ; }
+        cd packer && export PACKER_LOG_PATH=centos.txt ; packer validate CentOS-6.10.json &>> packer-validate.txt && printf "File  + CentOS-6.10.json\n" || { printf "File  - CentOS-6.10.json\n" ; exit 1 ; }
         date +"%nFinished generic box validation at %r on %x%n"
 
     - name: Build Box
@@ -62,7 +60,7 @@ jobs:
         sudo prlimit --pid $$ --nproc=65536:65536
         sudo prlimit --pid $$ --nofile=500000:500000
         sudo chmox +x packer/build.sh
-        sudo ./packer/build.sh        
+        sudo cd packer && ./build.sh        
         date +"%nFinished Build Box at %r on %x%n"
 
     - name: Archive Log Files
